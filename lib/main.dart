@@ -3,9 +3,12 @@ import 'package:get/get.dart';
 import 'package:mega_news_app/core/theme/app_theme.dart';
 import 'package:mega_news_app/presentation/modules/home/home_binding.dart';
 import 'package:mega_news_app/presentation/modules/home/home_page.dart';
+import 'package:mega_news_app/presentation/modules/news%20details/news_details_binding.dart';
+import 'package:mega_news_app/presentation/modules/news%20details/news_details_page.dart';
 import 'package:mega_news_app/presentation/routes/app_routes.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -23,6 +26,11 @@ class MyApp extends StatelessWidget {
           name: AppRoute.home,
           page: () => const HomePage(),
           binding: HomeBinding(),
+        ),
+        GetPage(
+          name: AppRoute.newsDetails,
+          page: () => const NewsDetailsPage(),
+          binding: NewsDetailsBinding(),
         ),
         // GetPage(
         //   name: AppRoute.login,

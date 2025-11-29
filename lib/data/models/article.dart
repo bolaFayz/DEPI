@@ -15,7 +15,7 @@ class Article {
   final DateTime publishedAt;
   final String lang;
   final Source source;
-  late final String? summary;
+  String? summary;
 
   Article({
     required this.id,
