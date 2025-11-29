@@ -1,24 +1,31 @@
-// in home page
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:mega_news_app/data/models/article.dart';
+import 'package:mega_news_app/presentation/routes/app_routes.dart';
 
 class NewsCard extends StatelessWidget {
   final Article article;
   final VoidCallback? onTap;
 
   const NewsCard({
-    Key? key,
+    super.key,
     required this.article,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final timeAgo = _getTimeAgo(article.publishedAt);
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: onTap ??
+              () {
+            Get.toNamed(
+              AppRoute.newsDetails,
+              arguments: article,
+            );
+          },
       child: Card(
         elevation: 2,
         shape: RoundedRectangleBorder(
@@ -27,34 +34,37 @@ class NewsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
-              ),
-              child: Container(
-                width: double.infinity,
-                height: 200,
-                color: Colors.grey[300],
-                child: article.image.isNotEmpty
-                    ? Image.network(
-                  article.image,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Center(
-                      child: Icon(
-                        Icons.image_not_supported,
-                        color: Colors.grey[400],
-                        size: 50,
-                      ),
-                    );
-                  },
-                )
-                    : Center(
-                  child: Icon(
-                    Icons.image,
-                    color: Colors.grey[400],
-                    size: 50,
+            // Hero Image
+            Hero(
+              tag: 'article_${article.id}',
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+                child: Container(
+                  width: double.infinity,
+                  height: 200,
+                  color: Colors.grey[300],
+                  child: article.image.isNotEmpty
+                      ? Image.network(
+                    article.image,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Center(
+                        child: Icon(
+                          Icons.image_not_supported,
+                          color: Colors.grey[400],
+                          size: 50,
+                        ),
+                      );
+                    },
+                  )
+                      : Center(
+                    child: Icon(
+                      Icons.image,
+                      color: Colors.grey[400],
+                      size: 50,
+                    ),
                   ),
                 ),
               ),
