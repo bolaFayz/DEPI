@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
 import 'news_details_controller.dart';
 
 class NewsDetailsPage extends GetView<NewsDetailsController> {
@@ -14,42 +16,66 @@ class NewsDetailsPage extends GetView<NewsDetailsController> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('تفاصيل الخبر'),
+        title: Text('تفاصيل الخبر'.tr),
         centerTitle: true,
         actions: [
-          IconButton(
-            onPressed: () {
-              // Share functionality (optional)
-              Get.snackbar('مشاركة', 'قريباً...');
-            },
-            icon: const Icon(Icons.share),
-          ),
+          // IconButton(
+          //   onPressed: () {
+          //
+          //   },
+          //   icon: const Icon(Icons.share),
+          // ),
         ],
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hero Image
+
             if (article.image.isNotEmpty)
               Hero(
                 tag: 'article_${article.id}',
-                child: Container(
+                child: CachedNetworkImage(
+                  imageUrl: article.image,
                   width: double.infinity,
                   height: 250,
-                  color: Colors.grey[300],
-                  child: Image.network(
-                    article.image,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Center(
-                        child: Icon(
+                  fit: BoxFit.cover,
+
+                  placeholder: (context, url) => Container(
+                    width: double.infinity,
+                    height: 250,
+                    color: Colors.grey[200],
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation(
+                          Theme.of(context).primaryColor,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  errorWidget: (context, url, error) => Container(
+                    width: double.infinity,
+                    height: 250,
+                    color: Colors.grey[300],
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
                           Icons.image_not_supported,
                           color: Colors.grey[400],
                           size: 80,
                         ),
-                      );
-                    },
+                        const SizedBox(height: 8),
+                        Text(
+                          'تعذر تحميل الصورة',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -60,7 +86,6 @@ class NewsDetailsPage extends GetView<NewsDetailsController> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title
                   Text(
                     article.title,
                     style: const TextStyle(
@@ -95,13 +120,12 @@ class NewsDetailsPage extends GetView<NewsDetailsController> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Divider
                   Divider(color: Colors.grey[300]),
                   const SizedBox(height: 16),
 
-                  // Description from GNews
+                  // Description
                   Text(
-                    'الوصف',
+                    'الوصف'.tr,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -122,18 +146,30 @@ class NewsDetailsPage extends GetView<NewsDetailsController> {
                   _buildActionButtons(context),
                   const SizedBox(height: 24),
 
-                  // Extracted Content Section
                   Obx(() {
                     if (controller.isExtracting.value) {
                       return Center(
-                        child: SpinKitFadingCircle(
-                          color: Theme.of(context).primaryColor,
-                          size: 40,
+                        child: Column(
+                          children: [
+                            SpinKitFadingCircle(
+                              color: Theme.of(context).primaryColor,
+                              size: 40,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'جاري استخراج الملخص...',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     }
 
-                    if (controller.hasExtracted.value) {
+                    if (controller.showSummary.value &&
+                        controller.extractedSummary.value != null) {
                       return _buildExtractedSummary(context);
                     }
 
@@ -152,12 +188,12 @@ class NewsDetailsPage extends GetView<NewsDetailsController> {
   Widget _buildActionButtons(BuildContext context) {
     return Row(
       children: [
-        // Read Full Article Button
+        // Read Full Article
         Expanded(
           child: ElevatedButton.icon(
             onPressed: () => controller.openArticleInBrowser(),
             icon: const Icon(Icons.open_in_browser),
-            label: const Text('اقرأ المقالة كاملة'),
+            label: Text('اقرأ المقالة كاملة'.tr),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.grey[700],
               foregroundColor: Colors.white,
@@ -166,14 +202,17 @@ class NewsDetailsPage extends GetView<NewsDetailsController> {
           ),
         ),
         const SizedBox(width: 12),
-        // Get Summary Button
+
+
         Expanded(
           child: Obx(() {
+            final isExtracting = controller.isExtracting.value;
+
             return ElevatedButton.icon(
-              onPressed: controller.isExtracting.value
+              onPressed: isExtracting
                   ? null
-                  : () => controller.extractArticleContent(),
-              icon: controller.isExtracting.value
+                  : () => controller.extractOrShowSummary(),
+              icon: isExtracting
                   ? SizedBox(
                 width: 20,
                 height: 20,
@@ -185,7 +224,9 @@ class NewsDetailsPage extends GetView<NewsDetailsController> {
                 ),
               )
                   : const Icon(Icons.summarize),
-              label: const Text('احصل على ملخص'),
+              label: Text(
+                isExtracting ? 'جاري الاستخراج...' : 'احصل على ملخص'.tr,
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).primaryColor,
                 foregroundColor: Colors.white,
@@ -198,14 +239,12 @@ class NewsDetailsPage extends GetView<NewsDetailsController> {
     );
   }
 
-  /// Extracted Summary Section (بدون المحتوى الكامل)
   Widget _buildExtractedSummary(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Summary Header
         Text(
-          'الملخص الذكي',
+          'الملخص الذكي'.tr,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
